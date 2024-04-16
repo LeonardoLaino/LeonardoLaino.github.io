@@ -1,0 +1,177 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.black-section {
+    background-color: #1b1b1b;
+    height: 40vh; /* Define a altura como 40% da altura da viewport */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 36px;
+    padding: 10px;
+    background-color: #1b1b1b;
+}
+
+.navbar a {
+    color:#fff
+}
+
+
+.home-link {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 10px;
+    display: inline-block; /* Para centralizar horizontalmente */
+}
+
+.home-link:hover {
+    color: rgb(244, 93, 33); /* Define a cor do texto quando o mouse passa sobre o link */
+}
+
+.centered-text {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 300;
+}
+
+@media (max-width: 768px) {
+    .centered-text {
+        font-size: 36px;
+    }
+}
+
+footer {
+    text-align: center;
+}
+
+.social-icons {
+    list-style-type: none;
+    padding: 0;
+}
+
+.social-icons li {
+    display: inline-block;
+    margin-right: 10px; /* Espaço entre os ícones */
+}
+
+.social-icons li:last-child {
+    margin-right: 0; /* Remove o espaço após o último ícone */
+}
+
+.fa-stack-2x {
+    color: black; /* Cor do fundo */
+}
+
+.fa-stack-1x {
+    color: white; /* Cor do ícone quando não está sendo ativado */
+}
+
+.fa-stack-1x:hover {
+    color: rgb(244, 93, 33); /* Define a cor do texto quando o mouse passa sobre o link */
+}
+
+.language-sql,
+.language-python {
+    display: inline-block;
+    text-align: left; /* Mantém o texto à esquerda dentro dos trechos de código */
+}
+
+
+/* Aqui vem as configs da pagina de portfólio */
+/* https://css-tricks.com/snippets/css/a-guide-to-flexbox/#flexbox-background */
+
+.container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: start;
+    justify-content: start;
+    align-content: start;
+    padding: 50px;
+    width: 1200px;
+    margin: 0 auto;
+}
+
+.portfolio-item {
+    width: 350px; /* Adjust width as needed */ /* */
+    height: 400px; /* Adjust height as needed */
+    background-color: #f4f4f4; /* Light gray background box do texto*/
+    margin: 0 20px; /* Distancia entre uma box e outra horizontalmente*/
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center; /* Center text within item */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.portfolio-item img {
+    max-width: 100%; /* Garante que a largura máxima da imagem seja de 100% do seu contêiner */
+    height: auto; /* Permite que a altura seja ajustada automaticamente para manter as proporções */
+}
+
+.portfolio-item a {
+    display: block; /* Make entire item clickable */
+    width: 100%; /* Fill entire item area */
+    height: 100%; /* Fill entire item area */
+    text-decoration: none; /* Remove underline from link */
+    overflow: hidden; /* Prevent image overflow */
+    padding-bottom: 10%;
+    transition: opacity 0.6s ease-in-out; /* Smooth opacity change on hover */
+}
+
+.portfolio-item a:hover {
+    opacity: 0.6; /* Reduce opacity on hover */
+}
+
+.img-responsive {
+    width: 100%; /* Responsive image */
+    height: auto; /* Maintain image aspect ratio */
+}
+
+.img-centered {
+    margin: 0 auto; /* Center image horizontally */
+}
+
+.portfolio-caption {
+    color: rgb(244, 93, 33); /* Define a cor do texto quando o mouse passa sobre o link */
+}
+
+.text-muted {
+    font-family: 'Open Sans', sans-serif;
+    color: #6c757d; /* Muted text color */
+    margin-top: -15px;
+    padding-bottom: 10%;
+}
+
+h2 {
+    margin-bottom: -10px;
+    font-size: 22px; /* Ajuste o tamanho da fonte conforme necessário */
+    font-weight: 700;
+    font-family: 'Open Sans', sans-serif;
+  }
+  
+  .link-h2 {
+    color: rgb(244, 93, 33); /* Define a cor do texto quando o mouse passa sobre o link */
+    text-decoration: none; /* Remove o sublinhado padrão do link */
+  }
+  
+  .link-h2:hover {
+    color: outra-cor; /* Defina a cor do texto ao passar o mouse sobre o link */
+  }
+  

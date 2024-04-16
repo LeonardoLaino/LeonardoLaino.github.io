@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <!-- Preprocessar Scripts do Python e SQL-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-sql.min.js"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/images/favicon_mindmap.png">
+
+    <title>{{ page.title }}</title>
+    <link rel="stylesheet" href="{{ '/assets/css/styles.css' | relative_url }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="black-section">
+        <nav class="navbar">
+            <a href="/" class="home-link">Home</a>
+            <a href="/portfolio/" class="home-link">Portfólio</a>
+            <a href="/about/" class="home-link">About</a>
+        </nav>
+        <div class="centered-text">
+            <h1><font style="font-size: 86px;"><b>{{ page.author }}</b></font></h1>
+        </div>
+    </div>
+    <!-- Aqui é onde o conteúdo de cada página será inserido-->
+    <div class="page-content">
+    
+        {{ content }}
+    
+    </div>
+
+    <!-- Linha Horizontal para separar o texto dos icones do rodapé-->
+    <hr>
+
+    <footer>
+        <ul class="social-icons">
+            <!--Adicionar Icone do Linkedin-->
+            <li>
+                <a href="https://www.linkedin.com/in/leonardo-laino/" target="_blank" rel="noopener noreferrer">
+                    <span class="fa-stack fa-lg">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
+                      </span>
+                    <span class="sr-only">LinkedIn</span> <!-- Para acessibilidade -->
+                </a>
+            </li>
+            <!--Adicionar Icone do Github-->
+            <li>
+                <a href="https://github.com/LeonardoLaino" target="_blank" rel="noopener noreferrer">
+                    <span class="fa-stack fa-lg">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                      </span>
+                    <span class="sr-only">Instagram</span> <!-- Para acessibilidade -->
+                </a>
+            </li>
+            <!--Adicionar Icone do Email-->
+            <li>
+                <a href="mailto:leonardo.mlaino@gmail.com" target="_blank" rel="noopener noreferrer">
+                    <span class="fa-stack fa-lg">
+                        <i class="fa fa-circle fa-stack-2x"></i>
+                        <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
+                      </span>
+                    <span class="sr-only">Instagram</span> <!-- Para acessibilidade -->
+                </a>
+            </li>
+        </ul>
+    </footer>
+
+</body>
+</html>

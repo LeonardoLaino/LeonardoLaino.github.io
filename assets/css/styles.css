@@ -1,0 +1,165 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.black-section {
+    background-color: #1b1b1b;
+    height: 40vh; /* Define a altura como 40% da altura da viewport */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 36px;
+    padding: 10px;
+    background-color: #1b1b1b;
+}
+
+.navbar a {
+    color:#fff
+}
+
+
+.home-link {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 10px;
+    display: inline-block; /* Para centralizar horizontalmente */
+}
+
+.home-link:hover {
+    color: rgb(244, 93, 33); /* Define a cor do texto quando o mouse passa sobre o link */
+}
+
+.centered-text {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 300;
+}
+
+@media (max-width: 768px) {
+    .centered-text {
+        font-size: 36px;
+    }
+}
+
+footer {
+    text-align: center;
+}
+
+.social-icons {
+    list-style-type: none;
+    padding: 0;
+}
+
+.social-icons li {
+    display: inline-block;
+    margin-right: 10px; /* Espaço entre os ícones */
+}
+
+.social-icons li:last-child {
+    margin-right: 0; /* Remove o espaço após o último ícone */
+}
+
+.fa-stack-2x {
+    color: black; /* Cor do fundo */
+}
+
+.fa-stack-1x {
+    color: white; /* Cor do ícone quando não está sendo ativado */
+}
+
+.fa-stack-1x:hover {
+    color: rgb(244, 93, 33); /* Define a cor do texto quando o mouse passa sobre o link */
+}
+
+.language-sql,
+.language-python {
+    display: inline-block;
+    text-align: left; /* Mantém o texto à esquerda dentro dos trechos de código */
+}
+
+.page-content {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 20px;
+    line-height: 1.5;
+    margin: 0 auto;
+    max-width: 800px; /* Largura máxima do conteúdo para centralizá-lo na página */
+    padding: 20px;
+    color: #333;
+}
+
+.page-content h1, 
+.page-content h2, 
+.page-content h3, 
+.page-content h4, 
+.page-content h5, 
+.page-content h6 {
+    font-weight: bold;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+.page-content h1 {
+    font-size: 48px;
+    font-weight: 800;
+}
+
+.page-content h2 {
+    font-size: 30px;
+}
+
+.page-content h3 {
+    font-size: 24px;
+}
+
+.page-content h4 {
+    font-size: 20px;
+}
+
+.page-content h5 {
+    font-size: 18px;
+}
+
+.page-content h6 {
+    font-size: 16px;
+}
+
+.centered-image {
+    display: block; /* Define a imagem como um bloco para aplicar margens automáticas */
+    margin: 0 auto; /* Define margens automáticas para centralizar a imagem horizontalmente */
+    max-width: 100%; /* Garante que a imagem não ultrapasse a largura do seu contêiner */
+    height: auto; /* Mantém a proporção original da imagem */
+}
+
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ebebeb;
+}
