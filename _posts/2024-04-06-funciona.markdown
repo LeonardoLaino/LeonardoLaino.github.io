@@ -2,7 +2,7 @@
 layout: default
 title: Credit Scoring
 author: Credit Scoring
-date: 2024-04-14 22:11:00 -0300
+date: 2024-04-06
 ---
 
 
