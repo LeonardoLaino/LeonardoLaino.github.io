@@ -6,11 +6,11 @@ author: Portfólio
 
 <div class="container">
   <div id="Item 1" class="portfolio-item">
-    <a href="{{ site.baseurl }}/2024/04/14/credit-scoring-ml.html" class="portfolio-link" target="_blank">
+    <a href="{{ site.baseurl }}/2024/04/14/credit-scoring-ml/" class="portfolio-link" target="_blank">
       <img src="{{ site.baseurl }}/assets/images/credit_score.jpg" class="img-responsive img-centered" alt="None">
     </a>
     <div class="portfolio-caption">
-      <h2><a href="{{ site.baseurl }}/2024/04/14/credit-scoring-ml.html" class="link-h2" target="_blank">Modelo de Risco de Crédito</a></h2>
+      <h2><a href="{{ site.baseurl }}/2024/04/14/credit-scoring-ml/" class="link-h2" target="_blank">Modelo de Risco de Crédito</a></h2>
       <p class="text-muted"><i><b>Como Machine Learning pode nos ajudar na tomada de melhores decisões em concessão de crédito?</b></i></p>
     </div>
   </div>
