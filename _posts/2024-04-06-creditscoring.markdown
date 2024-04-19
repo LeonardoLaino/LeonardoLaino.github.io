@@ -210,41 +210,45 @@ Outro ponto importante a se destacar é que, para esta volumetria de dados, util
 Iniciando com o básico, aqui eu carrego os dados e as bibliotecas que irei utilizar. Neste exemplo, estou manipulando a base de cartões de crédito (`credit card balance`).
 
 
-``` python
-# Carregando as bibliotecas
-import os
-import findspark
-findspark.init()
-from pyspark.sql import SparkSession
-spark = SparkSession.builder \
-    .appName("FeatureEng") \
-    .config("spark.executor.memory", "14g") \
-    .config("spark.driver.memory", "14g") \
-    .getOrCreate()
-from warnings import filterwarnings
-filterwarnings('ignore')
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
+  # Carregando as bibliotecas
+  import os
+  import findspark
+  findspark.init()
+  from pyspark.sql import SparkSession
+  spark = SparkSession.builder \
+      .appName("FeatureEng") \
+      .config("spark.executor.memory", "14g") \
+      .config("spark.driver.memory", "14g") \
+      .getOrCreate()
+  from warnings import filterwarnings
+  filterwarnings('ignore')
 
-# Carregando a Tabela
-credit_balance = spark.read.csv(
-    './DATASETS/credit_card_balance.csv', 
-    header= True,
-    inferSchema= True
-)
+  # Carregando a Tabela
+  credit_balance = spark.read.csv(
+      './DATASETS/credit_card_balance.csv', 
+      header= True,
+      inferSchema= True
+  )
 
-# Checando as Dimensões
-(credit_balance.count(), len(credit_balance.columns))
->> (3.840.312, 23)
+  # Checando as Dimensões
+  (credit_balance.count(), len(credit_balance.columns))
+  >> (3.840.312, 23)
 
+  # Criando uma View (Para usar o SQL)
+  credit_balance.createOrReplaceTempView('credit_balance')
+  </code></pre>
+</div>
 
-# Criando uma View (Para usar o SQL)
-credit_balance.createOrReplaceTempView('credit_balance')
-```
 
 Com os dados devidamente carregados, eu vou criar `flags temporais` que futuramente me permitirão fazer agregações em janelas de tempo específicas. 
 
 Para esta tabela em específico, a coluna que nos indica a data dos registros é a `MONTHS_BALANCE`. Em casos de crédito como este, geralmente, agregar transações dos últimos **3**, **6**, **9** e **12** meses já é de grande valor.
 
-``` python
+
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
 temp01 = spark.sql("""
 SELECT
     *,
@@ -272,12 +276,14 @@ ORDER BY
 
 # Atualizando a View
 temp01.createOrReplaceTempView('temp01')
-```
+  </code></pre>
+</div>
 
 Com as flags criadas e munido de funções básicas de agregação, diminuí a granularidade da tabela para <b>nível cliente</b>.
 
 
-``` python
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
 # Importando as funções de Agregação
 from pyspark.sql.functions import when, min, max, sum, round, col, median
 
@@ -309,7 +315,8 @@ new_cols = tuple(new_cols)
 
 # Unpacking
 temp02 = temp01.groupBy("SK_ID_PREV").agg(*new_cols).orderBy("SK_ID_PREV")
-```
+  </code></pre>
+</div>
 
 Com este processo, podemos obter um total de ``289 variáveis``!
 
@@ -319,7 +326,8 @@ No entando, devido a limitações computacionais (e de tempo), não irei estress
 
 Após aplicar os mesmos conceitos nas tabelas disponíveis, e conectando-as devidamente, obtive uma tabela com `10.964 variáveis`.
 
-``` python
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
 # Tabela com os dados do Bureau, após feature engineering
 bureau = spark.read.parquet('./BASES_TREINO_TESTE/BUREAU_FEAT_ENG')
 
@@ -336,18 +344,318 @@ app_train_final = app_train.join(other= prev_app, on= "SK_ID_CURR", how= 'left')
 # Observando a dimensão final da tabela após os joins
 display(app_train_final.count(), len(app_train_final.columns))
 >> (215.257, 10.964)
-```
+  </code></pre>
+</div>
 
-Perceba que a quantidade de linhas da tabela final reflete o que encontrei durante a exploração da base de treino. Isso me dá a segurança de que não cometi nenhum erro nas conexões.
+
+Com essa tabela criada, vou fazer uma feature selection simples para facilitar a persistência desses dados em disco.
+
+
+Para esta etapa, irei remover colunas com alta taxas de nulos e features que possuam alta correlação entre si. Também será necessário adaptar este processo para a volumetria de dados que estou lidando, uma vez que esta tabela não pode ser carregada pelo Pandas. Com isso em mente, irei criar lotes de N variáveis e aplicar as funções de feature selection. Ao final deste procedimento, devemos ter uma quantidade razoável de variáveis para as próximas operações.
+
+
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
+from tqdm import tqdm
+# Carregando as funções de feature selection
+from feature_selection_functions import amostragem, remove_highly_correlated_features, generate_metadata, variancia, vars_selection
+
+# Função para criar lotes de colunas
+def criar_lotes(lista, tamanho):
+    
+    qtd = len(lista) // tamanho
+    residuo = len(lista) % tamanho
+    lotes = []
+    slice_start = 0
+    slice_end = tamanho
+
+    for _ in range(1,qtd+2):
+        if _ == (qtd+2):
+            lotes.append(lista[len(lista) - residuo:len(lista)-1])
+            break
+
+        lotes.append(lista[slice_start:slice_end])
+        slice_start+= tamanho
+        slice_end+= tamanho
+    
+    return lotes
+
+lotes = criar_lotes(app_train_final_cols, 500)
+
+variaveis_selecionadas = []
+
+for lote in tqdm(lotes):
+    lote.append('SK_ID_CURR')
+    lote.append('TARGET')
+
+    temp01 = app_train_final.select(*lote).toPandas()
+
+    selecao = vars_selection(temp01, percentual_preenchimento= 80, threshold= 0.5, tamanho_amostragem= 90000)
+
+    if not selecao.empty:
+        for variavel in selecao['Variável']:
+            variaveis_selecionadas.append(variavel)
+    else:
+        pass
+  </code></pre>
+</div>
+
+Após o término de execução, reduzimos a quantidade de variáveis de `10.963` para `218`.
 
 
 <h1>3. Modelagem Estatística</h1>
 
+Nesta seção irei criar e avaliar dos modelos estatísticos. O critério de sucesso  consiste em assegurar que o modelo seja capaz de classificar os clientes em faixas de score, permitindo a distinção entre bons e maus pagadores. Este processo é fundamental para que a área de negócios consiga controlar o risco, mantendo o maior valor possível de aprovação.
+
+Não irei entrar nas etapas de `data preparation` e `feature selection`, apenas irei menciona-las supercialmente a seguir:
+
+1. <b><i>Missings</i></b>: Preenchimento por Mediana para variáveis contínuas e valores mais frequentes para variáveis categóricas;
+
+2. <b><i>Transformações</i></b>: Padronização para as variáveis contínuas e Label Encoder para as variáveis categóricas;
+
+3. <b><i>Feature Selection</i></b>: Novamente removi variáveis com alta correlação. Para a Regressão Logística, selecionei as 20 melhores variáveis via Feature Importance com XGBoost. Para o LGBM, utilizei todas as variáveis.
+
 
 <h2>3.1. Baseline</h2>
-TBA
+Aqui irei testar alguns modelos apenas com os dados de treino (conforme fornecido no problema), com intuito de estabelecer uma referencia de desempenho.
+
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
+from model_metrics_functions import plot_metrics, calculate_metrics
+
+models = [
+    DecisionTreeClassifier(criterion= 'gini', random_state=1),
+    LogisticRegression(solver= 'liblinear', random_state=1),
+    RandomForestClassifier(random_state=1),
+    GradientBoostingClassifier(random_state=1),
+    XGBClassifier(random_state=1),
+    lgb.LGBMClassifier(random_state=1)
+]
+
+for model in models:
+    model_name = str(model)[:str(model).find("(")]
+    # Treinamento
+    model.fit(X_train_processed, y_train)
+
+    # Avaliação
+    metrics = calculate_metrics(model_name, model, X_train_processed, y_train, X_test_processed, y_test)
+    display(metrics)
+  </code></pre>
+</div>
+
+Após o término da execução, estes foram os resultados:
+
+<table border="1">
+  <tr>
+    <th>Algoritmo</th>
+    <th>Conjunto</th>
+    <th>Acuracia</th>
+    <th>Precisao</th>
+    <th>Recall</th>
+    <th>AUC_ROC</th>
+    <th>GINI</th>
+    <th>KS</th>
+  </tr>
+  <tr>
+    <td>DecisionTreeClassifier</td>
+    <td>Treino</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+  </tr>
+  <tr>
+    <td>DecisionTreeClassifier</td>
+    <td>Teste</td>
+    <td>0.851993</td>
+    <td>0.134017</td>
+    <td>0.157772</td>
+    <td>0.534861</td>
+    <td>0.069722</td>
+    <td>0.070959</td>
+  </tr>
+</table>
+
+<br>
+
+<table border="1">
+  <tr>
+    <th>Algoritmo</th>
+    <th>Conjunto</th>
+    <th>Acuracia</th>
+    <th>Precisao</th>
+    <th>Recall</th>
+    <th>AUC_ROC</th>
+    <th>GINI</th>
+    <th>KS</th>
+  </tr>
+  <tr>
+    <td>RandomForestClassifier</td>
+    <td>Treino</td>
+    <td>0.999973</td>
+    <td>1.0</td>
+    <td>0.999674</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+    <td>1.000000</td>
+  </tr>
+  <tr>
+    <td>RandomForestClassifier</td>
+    <td>Teste</td>
+    <td>0.920499</td>
+    <td>0.0</td>
+    <td>0.000000</td>
+    <td>0.692609</td>
+    <td>0.385219</td>
+    <td>0.285866</td>
+  </tr>
+</table>
+
+<br>
+
+<table border="1">
+  <tr>
+    <th>Algoritmo</th>
+    <th>Conjunto</th>
+    <th>Acuracia</th>
+    <th>Precisao</th>
+    <th>Recall</th>
+    <th>AUC_ROC</th>
+    <th>GINI</th>
+    <th>KS</th>
+  </tr>
+  <tr>
+    <td>GradientBoostingClassifier</td>
+    <td>Treino</td>
+    <td>0.919265</td>
+    <td>0.687708</td>
+    <td>0.016859</td>
+    <td>0.766100</td>
+    <td>0.532200</td>
+    <td>0.396157</td>
+  </tr>
+  <tr>
+    <td>GradientBoostingClassifier</td>
+    <td>Teste</td>
+    <td>0.920840</td>
+    <td>0.593220</td>
+    <td>0.013635</td>
+    <td>0.751106</td>
+    <td>0.502211</td>
+    <td>0.373384</td>
+  </tr>
+</table>
+
+<br>
+
+<table border="1">
+  <tr>
+    <th>Algoritmo</th>
+    <th>Conjunto</th>
+    <th>Acuracia</th>
+    <th>Precisao</th>
+    <th>Recall</th>
+    <th>AUC_ROC</th>
+    <th>GINI</th>
+    <th>KS</th>
+  </tr>
+  <tr>
+    <td>XGBClassifier</td>
+    <td>Treino</td>
+    <td>0.929147</td>
+    <td>0.956670</td>
+    <td>0.136667</td>
+    <td>0.908577</td>
+    <td>0.817155</td>
+    <td>0.650010</td>
+  </tr>
+  <tr>
+    <td>XGBClassifier</td>
+    <td>Teste</td>
+    <td>0.919895</td>
+    <td>0.452323</td>
+    <td>0.036034</td>
+    <td>0.731318</td>
+    <td>0.462636</td>
+    <td>0.347898</td>
+  </tr>
+</table>
+
+<br>
+
+<table border="1">
+  <tr>
+    <th>Algoritmo</th>
+    <th>Conjunto</th>
+    <th>Acuracia</th>
+    <th>Precisao</th>
+    <th>Recall</th>
+    <th>AUC_ROC</th>
+    <th>GINI</th>
+    <th>KS</th>
+  </tr>
+  <tr>
+    <td>LGBMClassifier</td>
+    <td>Treino</td>
+    <td>0.920407</td>
+    <td>0.862595</td>
+    <td>0.027610</td>
+    <td>0.833379</td>
+    <td>0.666758</td>
+    <td>0.508259</td>
+  </tr>
+  <tr>
+    <td>LGBMClassifier</td>
+    <td>Teste</td>
+    <td>0.920747</td>
+    <td>0.559701</td>
+    <td>0.014608</td>
+    <td>0.750472</td>
+    <td>0.500945</td>
+    <td>0.376406</td>
+  </tr>
+</table>
+
+Os modelos baseados em <i>bagging</i> sofreram de overfitting, enquanto os modelos baseados em <i>boosting</i> (como o `LGBM` e o `GradientBoosting`) se saíram bem melhor.
 
 <h2>3.2. Regressão Logística</h2>
+
+<h3>3.2.1. Um pouco sobre a Regressão Logística</h3>
+
+A regressão logística é um dos modelos mais conhecidos e utilizados no setor de crédito devido à sua grande estabilidade e facilidade de interpretação. Por meio dos coeficientes $$\beta$$ e seus respectivos $$p_{valor}$$, é possível compreender como o aumento ou diminuição de uma variável afeta o <i>score</i> de crédito.
+
+
+A ideia da regressão logística é modelar a relação entre uma variável `dependente` binária (neste caso, adimplente/inadimplente ou 0/1) e $$n$$ variáveis `independentes`. Além disso, ela é capaz de fornecer a `probabilidade` de cada observação pertencer a uma determinada classe.
+
+
+A cara da equação é a seguinte:
+
+$$ln(\frac{p}{1-p}) = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} + ... + \beta_{n}x_{n}$$
+
+<b>Onde</b>:
+
+$$p:$$ é a probabilidade de evento (ou de pertencer a uma classe);
+
+$$\frac{p}{1-p}:$$ é a razão das probabilidades (odds);
+
+$$\beta_{0}:$$ é o intercepto;
+
+$$\beta_{1}, \beta_{2}, ..., \beta_{n}:$$ são os coeficientes que representam o efeito das variáveis independentes $$x_{1}, x_{2}, ..., x_{n}$$ sobre a log-odds do evento ocorrer.
+
+Os $$\beta$$ são calculados maximizando a equação da `verossimilhança` usando técnicas de aproximação numérica (Como <b> Newton-Raphson</b> ou <b>Gradiente Descendente</b>). De forma resumida, chuta-se um valor inicial pro Beta, calcula-se o valor da função, atualiza-se o valor de $$\beta$$ e o processo é repetido até convergir em um valor máximo da função.
+
+Após o processo de cálculo dos $$\beta$$, tem-se um valor $$z$$ (conhecido como ``logito`` ou `log-odds`) que representa a equação linear $$\beta_{0} + \sum_{n=1}^{N}(\beta_{n}x_{n})$$.
+
+Para calcular a probabilidade, utilizamos a função sigmoide (ou função logística), da seguinte forma:
+
+$$p = \frac{1}{1+e^{-z}}$$
+
+Que, em síntese, transforma o valor de $$z$$ em um valor entre $$0$$ e $$1$$.
+
+
+<h3>3.2.2. O Modelo</h3>
 TBA
 
 <h2>3.3. LightGBM</h2>
