@@ -57,7 +57,7 @@ Observe o comportamento da variável `YEARS BUILD AVG` e compare-o com a variáv
 
 Enquanto na primeira as duas curvas estão praticamente sobrepostas conforme o valor da variável cresce, a segunda apresenta um desbalanceamento em uma faixa específica de valores. Isso nos revela um recorte para investigação mais profunda, onde há possibilidade de extração de mais insights. Por outro lado, também pode nos indicar que esta variável é uma boa preditora do nosso <i>target</i>.
 
-Outras variáveis que nos chamam atenção são `EXT SOURCE 1`, `EXT SOURCE 2` e `EXT SOURCE 3`. Essas variáveis são scores de crédito provenientes de 3 bureaus de crédito distintos. Note como elas possuem alta capacidade de segmentar o <i>target</i>.
+Outras variáveis que nos chamam atenção são `EXT SOURCE 1`, `EXT SOURCE 2` e `EXT SOURCE 3`. Essas variáveis são <i>scores</i> de crédito provenientes de 3 bureaus de crédito distintos. Note como elas possuem alta capacidade de segmentar o <i>target</i>.
 
 
 <h2>1.2. Variáveis Categóricas</h2>
@@ -405,7 +405,7 @@ Após o término de execução, reduzimos a quantidade de variáveis de `10.963`
 
 <h1>3. Modelagem Estatística</h1>
 
-Nesta seção irei criar e avaliar dos modelos estatísticos. O critério de sucesso  consiste em assegurar que o modelo seja capaz de classificar os clientes em faixas de score, permitindo a distinção entre bons e maus pagadores. Este processo é fundamental para que a área de negócios consiga controlar o risco, mantendo o maior valor possível de aprovação.
+Nesta seção irei criar e avaliar dos modelos estatísticos. O critério de sucesso  consiste em assegurar que o modelo seja capaz de classificar os clientes em faixas de <i>score</i>, permitindo a distinção entre bons e maus pagadores. Este processo é fundamental para que a área de negócios consiga controlar o risco, mantendo o maior valor possível de aprovação.
 
 Não irei entrar nas etapas de `data preparation` e `feature selection`, apenas irei menciona-las supercialmente a seguir:
 
@@ -622,15 +622,18 @@ Os modelos baseados em <i>bagging</i> sofreram de overfitting, enquanto os model
 
 <h2>3.2. Regressão Logística</h2>
 
-<h3>3.2.1. Um pouco sobre a Regressão Logística</h3>
+<h3>3.2.1. Sobre a Regressão Logística</h3>
 
-A regressão logística é um dos modelos mais conhecidos e utilizados no setor de crédito devido à sua grande estabilidade e facilidade de interpretação. Por meio dos coeficientes $$\beta$$ e seus respectivos $$p_{valor}$$, é possível compreender como o aumento ou diminuição de uma variável afeta o <i>score</i> de crédito.
-
-
-A ideia da regressão logística é modelar a relação entre uma variável `dependente` binária (neste caso, adimplente/inadimplente ou 0/1) e $$n$$ variáveis `independentes`. Além disso, ela é capaz de fornecer a `probabilidade` de cada observação pertencer a uma determinada classe.
+Antes de partir para a modelagem em si, vou entrar um pouco nos bastidores da regressão logística.
 
 
-A cara da equação é a seguinte:
+A regressão logística é um dos modelos mais conhecidos e utilizados no setor de crédito devido à sua grande estabilidade e facilidade de interpretação. Por meio dos coeficientes $$\beta$$, é possível compreender como o aumento ou diminuição de uma variável afeta o <i>score</i> de crédito.
+
+
+A ideia da regressão logística é modelar a relação entre uma variável `dependente` binária (neste caso, adimplente/inadimplente ou 0/1) e $$n$$ variáveis `independentes`. Além disso, ela é capaz de fornecer a `probabilidade` de cada observação pertencer a uma determinada classe, o que a torna uma ferramenta muito poderosa.
+
+
+A Regressão Logística pode ser escrita da seguinte maneira:
 
 $$ln(\frac{p}{1-p}) = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} + ... + \beta_{n}x_{n}$$
 
@@ -638,25 +641,484 @@ $$ln(\frac{p}{1-p}) = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} + ... + \beta_
 
 $$p:$$ é a probabilidade de evento (ou de pertencer a uma classe);
 
-$$\frac{p}{1-p}:$$ é a razão das probabilidades (odds);
-
 $$\beta_{0}:$$ é o intercepto;
 
 $$\beta_{1}, \beta_{2}, ..., \beta_{n}:$$ são os coeficientes que representam o efeito das variáveis independentes $$x_{1}, x_{2}, ..., x_{n}$$ sobre a log-odds do evento ocorrer.
 
-Os $$\beta$$ são calculados maximizando a equação da `verossimilhança` usando técnicas de aproximação numérica (Como <b> Newton-Raphson</b> ou <b>Gradiente Descendente</b>). De forma resumida, chuta-se um valor inicial pro Beta, calcula-se o valor da função, atualiza-se o valor de $$\beta$$ e o processo é repetido até convergir em um valor máximo da função.
 
-Após o processo de cálculo dos $$\beta$$, tem-se um valor $$z$$ (conhecido como ``logito`` ou `log-odds`) que representa a equação linear $$\beta_{0} + \sum_{n=1}^{N}(\beta_{n}x_{n})$$.
+O método para encontrar os valores de $$\beta$$ ótimos envolve otimizar uma função de custo através de aproximações numéricas, aplicando processos iterativos como <b>Newton-Raphson</b> ou o <b>Gradiente Descendente</b>.
 
-Para calcular a probabilidade, utilizamos a função sigmoide (ou função logística), da seguinte forma:
 
-$$p = \frac{1}{1+e^{-z}}$$
+Quanto as funções de custo para este caso, temos: 
 
-Que, em síntese, transforma o valor de $$z$$ em um valor entre $$0$$ e $$1$$.
+a) Maximizar a <b>Verossimilhança</b> (<i>Maximum Likelihood Estimation - MLE</i>);
+
+$$argmax \quad L(\beta_{0}, \beta_{1}, ..., \beta_{n}) = \prod_{i=1}^{n} P(y_{i}|x_{i};\beta_{0}, \beta_{1}, ..., \beta_{n})$$
+
+Como esta função faz o produto das probabilidades condicionais das observações pertencerem a uma determinada classe, encontrar os valores de $$\beta$$ que maximizem a função significa encontrar os valores de $$\beta$$ que maximizam a <b>probabilidade</b> das observações pertencerem a uma determinada classe.
+
+b) Minimizar a <b>Entropia Cruzada</b> (<i>Cross-Entropy</i>).
+
+$$H(y, \hat{y}) = -\frac{1}{n} \sum_{i=1}^{n} \left( y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right)$$
+
+
+A entropia cruzada mede a diferença entre as probabilidades preditas e as probabilidades reais. Logo, é natural pensar que se estamos minimizando o valor da entropia cruzada, estamos minimizando o <i>erro</i>.
+
+
+Em ambos os casos, o calculo da probabilidade condicional é feito através da <b>função logística</b> (ou <i>função sigmoide</i>), aplicando os valores de $$\beta_{0}, \beta_{1}, ..., \beta_{n}$$ de uma i-ésima iteração:
+
+
+$$\hat{y_{i}} = P(y_{i} = 1|x_{i}) = \frac{1}{1 + e^{-(\beta_{0}, \beta_{1}x_{1}, ..., \beta_{n}x_{n})}}$$
+
+
+Uma vez que os valores de $$\beta$$ foram otimizados, pode-se encontrar o valor da <b>probabilidade</b> de qualquer observação pertencer a classe "1". No entando, apenas realizar as predições não é suficiente quando olhamos do ponto de vista do negócio. Os <i>insights</i> e respostas obtidas através do modelo precisam ser interpretáveis! E para esta tarefa, entramos na parte da equação que ainda não abordei: o <b><i>log-odds</i></b>.
+
+
+$$\ln{(\frac{p}{1-p})}$$
+
+
+É preciso lembrar, porém, que <i>odds</i> (chance) e probabilidade são conceitos diferentes. Enquanto a <b>probabilidade</b> é quantificada como a razão entre um evento ocorrer e todos os possíveis resultados para este evento, a <i>odds</i> é a razão entre um evento ocorrer e este mesmo evento <b>não</b> ocorrer.
+
+
+Por exemplo, se um determinado evento possui 5 sucessos em 8 tentativas, podemos dizer que a probabilidade de se obter um sucesso ou um fracasso são, respectivamente:
+
+
+$$P_{sucesso} = \frac{Qtd.Sucessos}{Qtd.Tentativas} = \frac{5}{8} = 0.625$$
+
+$$P_{fracasso} = 1 - P_{sucesso} = 1 - 0.625 = 0.375$$
+
+Por outro lado, se estamos interessados na <i>odds</i> de sucesso ou fracasso, temos que:
+
+
+$$odds_{sucesso} = \frac{Qtd.Sucessos}{Qtd.Fracassos} = \frac{5}{3} \approx 1.7$$
+
+$$odds_{fracasso} = \frac{Qtd.Fracassos}{Qtd.Sucessos} = \frac{3}{5} = 0.6$$
+
+
+Também podemos chegar ao mesmo resultado para as <i>odds</i> utilizando os conceitos de probabilidade (e assim chegando bem próximo do que vemos na Regressão Logística):
+
+
+$$odds_{sucesso} = \frac{P_{sucesso}}{P_{fracasso}} \iff \frac{P_{sucesso}}{1 - P_{sucesso}} = \frac{0.625}{1 - 0.625} \approx 1.7$$
+
+
+Olhando para os resultados percebemos que enquanto a probabilidade é sempre um valor compreendido no intervalo $$[0,1]$$, não podemos afirmar o mesmo em relação a <i>odds</i>, que possui intervalo de valores compreendido no intervalo $$[0,\infty]$$. Isso pode ser observado em casos que a probabilidade se aproxime muito de valores extremos (0 ou 1). 
+
+
+Como a interpretabilidade do resultado da Regressão Logística reside em utilizar os valores dos coeficientes $$\beta$$, para avaliar se uma variação em $$x_{n}$$ aumenta ou diminui a probabilidade (ou, no nosso caso, aumenta ou diminui o <i>score</i> de um cliente), obrigatoriamente precisamos ter uma relação de <b>linearidade</b> entre nossas variáveis independentes $$x_{n}$$ e o nosso meio de quantificar uma observação. Essa linearidade nunca existirá se utilizarmos somente o valor da probabilidade, uma vez que os resultados obrigatoriamente estarão entre $$[0,1]$$. 
+
+
+Embora os valores possíveis para a <i>odds</i> englobem mais valores, ele ainda ainda possui um problema: ele é <b>assimétrico</b>, uma vez que para valores de $$P\le0.5$$ geram valores de <i>odds</i> entre 0 e 1, enquanto valores de $$P > 0.5$$ podem ir até $$\infty$$. É aqui que tudo muda quando introduzimos o <b>logaritmo</b> do valor da <i>odds</i> (ou <b>log-odds</b>), que além de tornar este intervalo totalmente simétrico, ainda é capaz de lidar com variáveis em escalas diferentes.
+
+
+Aplicando a <b>log-odds</b> no nosso exemplo anterior, temos que:
+
+$$\log{(odds_{sucesso})} = \log{(\frac{5}{3})} = 0.2218$$
+
+$$\log{(odds_{fracasso})} = \log{(\frac{3}{5})} = -0.2218$$
+
+
+O que, sem dúvidas, torna a interpretação do modelo muito mais prática.
 
 
 <h3>3.2.2. O Modelo</h3>
-TBA
+Agora que já cobri a ideia de funcionamento por trás da Regressão Logística, irei aplicar o modelo com a ABT obtida após a etapa de Feature Engineering.
+
+Para iniciar, carreguei os dados e fiz o split de ``treino`` e ``teste``, removendo as colunas de ID e o Target.
+
+Após o split, iniciei a etapa de `Data Preparation`, aplicando as transformações que havia mencionado anteriormente. Como ainda existem muitas variáveis na nossa ABT, removi as variáveis que possuíam <b>correlação de pearson</b> maior que ``0.5``, e filtrei as 20 melhores variáveis segundo a <b>Feature Importance</b> do ``XGBoost``.
+
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
+# Instanciando o modelo
+xgb_model = XGBClassifier(random_state = 1)
+
+# Fittando o modelo
+xgb_model.fit(abt_train, y_train)
+
+# Criando uma tabela com a feature importance
+importances_df = pd.DataFrame({
+    'vars' : abt_train.columns,
+    'importance' : xgb_model.feature_importances_
+})
+
+# Selecionando as 20 melhores variáveis
+best_vars = importances_df.sort_values(by= 'importance', ascending= False)[:20].vars.tolist()
+
+# Atualizando nossa abt
+abt_train = abt_train[best_vars].copy()
+abt_test = abt_test[best_vars].copy()
+  </code></pre>
+</div>
+
+Aqui começa a parte mais importante da aplicação da Regressão Logística. O primeiro passo é verificar a linearidade das variáveis restantes com a <b><i>log-odds</i></b>, pelos motivos abordados anteriormente. Para isso, calculei o $$R^{2}$$ e gerei gráficos para cada variável. Não irei trazer todos os gráficos aqui, mas apenas um exemplo de um fit muito bom e outro muito ruim para ilustrar a situação.
+
+a) Exemplo de Fit Ótimo:
+<div class="container">
+    <img class= "centered-image" src="/assets/images/good_r2_logodds.png" alt="EDA">
+</div>
+
+Se repararmos, esta é uma das variáveis provenientes de `bureaus de crédito`. Conforme vimos anteriormente durante o EDA, esta variável se mostrava uma boa preditora para o <i>target</i>.
+
+b) Exemplo de Fit Ruim:
+
+<div class="container">
+    <img class= "centered-image" src="/assets/images/bad_r2_logodds.png" alt="EDA">
+</div>
+
+Para as variáveis com baixo $$R^{2}$$, tentarei aplicar algumas transformações (como logaritmo, raiz quadrada ou exponencial) e verificar novamente a linearidade com a <b><i>log-odds</i></b>.
+
+<div style="overflow-x: auto;">
+  <table>
+    <tr>
+      <th>Variable</th>
+      <th>Best Transformation</th>
+      <th>R^2 of Transformation</th>
+      <th>Feat Eng</th>
+      <th>Transformation Equation</th>
+    </tr>
+    <tr>
+      <td>VL_TOT_VL_MAX_AMT_CREDIT_SUM_OVERDUE_CREDIT_AC...</td>
+      <td>AbsLog</td>
+      <td>0.018054</td>
+      <td>Categorizar</td>
+      <td>AbsLog(VL_TOT_VL_MAX_AMT_CREDIT_SUM_OVERDUE_CR...)</td>
+    </tr>
+    <tr>
+      <td>AMT_GOODS_PRICE</td>
+      <td>Quadratic</td>
+      <td>0.379131</td>
+      <td>Categorizar</td>
+      <td>Quadratic(AMT_GOODS_PRICE)</td>
+    </tr>
+    <tr>
+      <td>OWN_CAR_AGE</td>
+      <td>AbsLog</td>
+      <td>0.389392</td>
+      <td>Categorizar</td>
+      <td>AbsLog(OWN_CAR_AGE)</td>
+    </tr>
+    <tr>
+      <td>VL_MAX_VL_SUM_NUM_INSTALMENT_NUMBER_U3M_INSTAL...</td>
+      <td>Quadratic</td>
+      <td>0.639222</td>
+      <td>Categorizar</td>
+      <td>Quadratic(VL_MAX_VL_SUM_NUM_INSTALMENT_NUMBER_...)</td>
+    </tr>
+    <tr>
+      <td>VL_TOT_VL_MAX_AMT_CREDIT_SUM_DEBT_CREDIT_TYPE_...</td>
+      <td>AbsLog</td>
+      <td>0.535312</td>
+      <td>Categorizar</td>
+      <td>AbsLog(VL_TOT_VL_MAX_AMT_CREDIT_SUM_DEBT_CREDI...)</td>
+    </tr>
+  </table>
+</div>
+
+Mesmo após as transformações, os novos valores de $$R^{2}$$ estão longes de mostrarem alguma linearidade com a <b><i>log-odds</i></b>, não restando outra alternativa a não ser <b>categorizar</b> os valores dessas variáveis. A categorização normalmente deve ser evitada, devido a perda de informação e poder estatístico. Porém, no caso específico da Regressão Logística, é uma alternativa viável para lidar com a violação da premissa de linearidade com a <b><i>log-odds</i></b>.
+
+Aqui o processo de categorização das variáveis foi feito através do treinamento de uma arvore de decisão simples, usando as quebras dos nós com parâmetro. Após o término da categorização, precisamos verificar novamente os valores de $$R^{2}$$ das variáveis para avaliar se o procedimento cumpriu com seu objetivo. Novamente, não irei trazer aqui todos os resultados, porém podemos comparar utilizando a variável que observamos um baixo $$R^{2}$$ anteriormente:
+
+<div class="container">
+    <img class= "centered-image" src="/assets/images/new_r2_good_fit.png" alt="EDA">
+</div>
+
+O mesmo resultado foi observado nas demais variáveis.
+
+Apliquei os mesmos procedimentos da etapa de `Data Preparation`, agora contemplando os dados categorizados. O próximo passo é gerar o <i><b>scorecard</b></i> das variáveis e verificar o $$p-valor$$.
+
+<div style="overflow-x: auto;">
+  <table>
+    <tr>
+      <th>Variavel</th>
+      <th>Beta Coefficient</th>
+      <th>P-Value</th>
+      <th>Wald Statistic</th>
+    </tr>
+    <tr>
+      <td>EXT_SOURCE_2</td>
+      <td>-2.145261e+00</td>
+      <td>0.000000e+00</td>
+      <td>1897.672562</td>
+    </tr>
+    <tr>
+      <td>EXT_SOURCE_3</td>
+      <td>-2.497780e+00</td>
+      <td>0.000000e+00</td>
+      <td>1874.889747</td>
+    </tr>
+    <tr>
+      <td>const</td>
+      <td>-5.469212e+00</td>
+      <td>4.184963e-96</td>
+      <td>432.707103</td>
+    </tr>
+    <tr>
+      <td>EXT_SOURCE_1</td>
+      <td>-1.222648e+00</td>
+      <td>1.200664e-65</td>
+      <td>292.832357</td>
+    </tr>
+    <tr>
+      <td>ORGANIZATION_TYPE</td>
+      <td>8.399421e+00</td>
+      <td>1.314801e-53</td>
+      <td>237.596163</td>
+    </tr>
+    <tr>
+      <td>CODE_GENDER</td>
+      <td>9.394816e+00</td>
+      <td>3.376465e-43</td>
+      <td>189.880285</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_TOT_VL_MAX_AMT_CREDIT_SUM_DEBT_CREDIT_TYPE_CREDIT_CARD_3.0</td>
+      <td>4.391254e-01</td>
+      <td>1.776173e-30</td>
+      <td>131.659469</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_TOT_VL_MAX_AMT_CREDIT_SUM_DEBT_CREDIT_TYPE_CREDIT_CARD_1.0</td>
+      <td>2.918998e-01</td>
+      <td>3.460126e-24</td>
+      <td>102.936798</td>
+    </tr>
+    <tr>
+      <td>NAME_CONTRACT_TYPE</td>
+      <td>1.312104e+01</td>
+      <td>2.469341e-22</td>
+      <td>94.485181</td>
+    </tr>
+    <tr>
+      <td>NAME_EDUCATION_TYPE</td>
+      <td>7.430119e+00</td>
+      <td>6.449095e-22</td>
+      <td>92.585106</td>
+    </tr>
+    <tr>
+      <td>TFT_AMT_GOODS_PRICE_2.0</td>
+      <td>2.355020e-01</td>
+      <td>7.541621e-22</td>
+      <td>92.275393</td>
+    </tr>
+    <tr>
+      <td>TFT_AMT_GOODS_PRICE_1.0</td>
+      <td>2.801600e-01</td>
+      <td>5.941381e-18</td>
+      <td>74.540272</td>
+    </tr>
+    <tr>
+      <td>FLAG_OWN_CAR</td>
+      <td>2.070341e+01</td>
+      <td>1.029334e-16</td>
+      <td>68.912441</td>
+    </tr>
+    <tr>
+      <td>DEF_60_CNT_SOCIAL_CIRCLE</td>
+      <td>1.823345e-01</td>
+      <td>5.084611e-15</td>
+      <td>61.227509</td>
+    </tr>
+    <tr>
+      <td>REGION_RATING_CLIENT_W_CITY</td>
+      <td>1.542734e-01</td>
+      <td>3.686974e-14</td>
+      <td>57.328901</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_MAX_VL_SUM_NUM_INSTALMENT_NUMBER_U3M_INSTALMENTS_FL_U12M_PREVIOUS_APPLICATION_3.0</td>
+      <td>3.594390e-01</td>
+      <td>3.914482e-13</td>
+      <td>52.685612</td>
+    </tr>
+    <tr>
+      <td>OCCUPATION_TYPE</td>
+      <td>3.402880e+00</td>
+      <td>4.690592e-12</td>
+      <td>47.812220</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_TOT_VL_MAX_AMT_CREDIT_SUM_DEBT_CREDIT_TYPE_CREDIT_CARD_2.0</td>
+      <td>2.304362e-01</td>
+      <td>3.424755e-11</td>
+      <td>43.917712</td>
+    </tr>
+    <tr>
+      <td>QT_MAX_DAYS_FIRST_DRAWING_FL_U12M_PREVIOUS_APPLICATION</td>
+      <td>-9.306779e-07</td>
+      <td>9.356356e-09</td>
+      <td>32.970590</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_MAX_VL_SUM_NUM_INSTALMENT_NUMBER_U3M_INSTALMENTS_FL_U12M_PREVIOUS_APPLICATION_1.0</td>
+      <td>1.686962e-01</td>
+      <td>1.350309e-07</td>
+      <td>27.792754</td>
+    </tr>
+    <tr>
+      <td>TFT_OWN_CAR_AGE_4.0</td>
+      <td>2.817931e-01</td>
+      <td>3.363984e-07</td>
+      <td>26.028592</td>
+    </tr>
+    <tr>
+      <td>REG_CITY_NOT_LIVE_CITY</td>
+      <td>1.609482e-01</td>
+      <td>3.840242e-07</td>
+      <td>25.772995</td>
+    </tr>
+    <tr>
+      <td>TFT_AMT_GOODS_PRICE_3.0</td>
+      <td>-1.277319e-01</td>
+      <td>1.567337e-05</td>
+      <td>18.653810</td>
+    </tr>
+    <tr>
+      <td>TFT_OWN_CAR_AGE_3.0</td>
+      <td>2.329940e-01</td>
+      <td>3.490027e-05</td>
+      <td>17.130342</td>
+    </tr>
+    <tr>
+      <td>TFT_OWN_CAR_AGE_2.0</td>
+      <td>1.584614e-01</td>
+      <td>1.799706e-04</td>
+      <td>14.029441</td>
+    </tr>
+    <tr>
+      <td>QT_MIN_QT_MAX_SK_DPD_DEF_NAME_CONTRACT_STATUS_ACTIVE_POSCASH_FL_U12M_PREVIOUS_APPLICATION</td>
+      <td>3.870633e-02</td>
+      <td>5.803978e-04</td>
+      <td>11.837819</td>
+    </tr>
+    <tr>
+      <td>FLAG_WORK_PHONE</td>
+      <td>6.051035e-02</td>
+      <td>9.791794e-03</td>
+      <td>6.672387</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_MAX_VL_SUM_NUM_INSTALMENT_NUMBER_U3M_INSTALMENTS_FL_U12M_PREVIOUS_APPLICATION_2.0</td>
+      <td>4.839981e-01</td>
+      <td>3.666035e-02</td>
+      <td>4.366121</td>
+    </tr>
+    <tr>
+      <td>TFT_VL_TOT_VL_MAX_AMT_CREDIT_SUM_OVERDUE_CREDIT_ACTIVE_CLOSED_2.0</td>
+      <td>3.830969e-01</td>
+      <td>5.400200e-01</td>
+      <td>0.375503</td>
+    </tr>
+  </table>
+</div>
+
+Das variáveis presentes no <i><b>scorecard</b></i>, apenas a <b>última</b> será removida, já que seu $$p-valor$$ ficou acima do nivel de significancia (95%).
+
+Finalmente, apliquei o modelo usando a ABT com as variáveis restantes, separando a taxa de evento em decis. Neste momento é importante observar a capacidade de <b>ordenação</b> do modelo, uma vez que quanto mais o <i>score</i> cresce, é natural esperar que a taxa de evento (inadimplencia) diminua.
+
+<div class="container">
+    <img class= "centered-image" src="/assets/images/event_rate_decile.png" alt="EDA">
+</div>
+
+O modelo conseguiu ordenar as faixas de score conforme o esperado. Este gráfico nos mostra a base de clientes divida em 10 partes aproximadamente iguais, usando como critério o <i>score</i> de cada cliente, de forma que cada parte contenha uma <b>faixa de <i>score</i></b>. Para os clientes da primeira faixa de score, podemos observar uma taxa de evento (no caso deste projeto, <b>inadimplencia</b>) de 25%. Isso significa que, caso a área de negócio decida <b>rejeitar</b> a concessão a todos os clientes nesta faixa de <i>score</i>, ela estará eliminando 25% do risco, em troca de 10% da base de clientes. Com isso em mente, percebe-se que quanto maior a taxa de evento no primeiro decil, mais valioso ele será para o negócio.
+
+
+<table>
+  <tr>
+    <th>Metric</th>
+    <th>Train Value</th>
+    <th>Test Value</th>
+  </tr>
+  <tr>
+    <td>KS</td>
+    <td>0.363068</td>
+    <td>0.366113</td>
+  </tr>
+  <tr>
+    <td>AUC</td>
+    <td>0.743848</td>
+    <td>0.745137</td>
+  </tr>
+  <tr>
+    <td>Gini</td>
+    <td>0.487695</td>
+    <td>0.490274</td>
+  </tr>
+</table>
+
+Olhando para as métricas do modelo, vemos que ele performou bem e variou muito pouco entre o `treino` e `teste`.
+
 
 <h2>3.3. LightGBM</h2>
-TBA
+
+Outro modelo que eu gostaria de trazer aqui é o <b>Light Gradient Boosting Machine</b>, um algoritmo de <i>gradient boosting tree</i> que, como o próprio nome diz, funciona em forma de árvores de decisão.
+
+A matemática por trás também envolve a otimização de uma função de perda, através do gradiente descendente, onde as árvores são adicionadas sequencialmente para minimizar a perda (conceito de <i>boosting trees</i>). Para problemas de classificação binária (como o que estamos lidando aqui) frequentemente utiliza, assim como a Regressão Logística, a função de entropia cruzada como função de perda.
+
+Sua implementação é bem mais direta do que a Regressão Logística, uma vez que não precisamos nos preocupar com questões de linearidade entre a <i><b>log-odds</b></i> e as variáveis, além possuir desempenho computacional bem superior, que nos permite trabalhar com uma quantidade maior de variáveis. Tudo isso vem com um custo: os resultados do algoritmo não possuem uma interpretação tão clara quanto a Regressão.
+
+Após carregar os dados e realizar o split, repliquei os procedimentos já feitos anteriormente para a etapa de `Data Preparation`. Com os dados prontos para uso, utilizei o `optuna` para a etapa de <i>tunning</i> dos <b>hiperparametros</b> e apliquei a melhor combinação no modelo.
+
+
+<div style="text-align: center; overflow-x: auto;">
+  <pre class="language-python"><code>
+
+study = optuna.create_study(
+  direction= 'maximize',
+  study_name= 'LGBM_M3',
+  storage= 'sqlite:///LGBM_M3.db'
+)
+
+model = lgb.LGBMClassifier(**study.best_params, random_state= 1, verbosity= -1)
+
+model.fit(X_train_dataprep, y_train)
+
+metricas = calculate_metrics(str(model)[:str(model).find("(")], model, X_train_dataprep, y_train, X_test_dataprep, y_test)
+
+  </code></pre>
+</div>
+
+<br>
+
+Com o término da execução desta parte, podemos avaliar as métricas do modelo (tabela abaixo).
+
+<table border="1">
+  <tr>
+    <th>Algoritmo</th>
+    <th>Conjunto</th>
+    <th>Acuracia</th>
+    <th>Precisao</th>
+    <th>Recall</th>
+    <th>AUC_ROC</th>
+    <th>GINI</th>
+    <th>KS</th>
+  </tr>
+  <tr>
+    <td>LGBMClassifier</td>
+    <td>Treino</td>
+    <td>0.919750</td>
+    <td>0.726829</td>
+    <td>0.024271</td>
+    <td>0.800839</td>
+    <td>0.601677</td>
+    <td>0.450380</td>
+  </tr>
+  <tr>
+    <td>LGBMClassifier</td>
+    <td>Teste</td>
+    <td>0.920778</td>
+    <td>0.565217</td>
+    <td>0.015193</td>
+    <td>0.759623</td>
+    <td>0.519246</td>
+    <td>0.387033</td>
+  </tr>
+</table>
+
+Comparando com o modelo <b>baseline</b>, notamos uma maior estabilidade entre os conjunto e uma melhora significativa durante o `teste`.
+
+Conforme fiz na Regressão Logística, aqui também estamos interessados na capacidade do modelo de ordenar a taxa de evento nas faixas de <i>score</i>.
+
+<div class="container">
+    <img class= "centered-image" src="/assets/images/event_rate_decile_lgbm.png" alt="EDA">
+</div>
+
