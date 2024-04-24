@@ -1013,6 +1013,8 @@ Apliquei os mesmos procedimentos da etapa de `Data Preparation`, agora contempla
 
 Das variáveis presentes no <i><b>scorecard</b></i>, apenas a <b>última</b> será removida, já que seu $$p-valor$$ ficou acima do nivel de significancia (95%).
 
+Como houve necessidade de remover uma variável, o modelo precisou ser retreinado e os $$p-valor$$ checados novamente. Após retreinado, não houve necessidade de remover nenhuma outra variável.
+
 Finalmente, apliquei o modelo usando a ABT com as variáveis restantes, separando a taxa de evento em decis. Neste momento é importante observar a capacidade de <b>ordenação</b> do modelo, uma vez que quanto mais o <i>score</i> cresce, é natural esperar que a taxa de evento (inadimplencia) diminua.
 
 <div class="container">
@@ -1433,3 +1435,5 @@ Este modelo se saiu ligeiramente melhor em concentrar a taxa de evento no primei
 </table>
 
 Este modelo se saiu ainda melhor que a ``Regressão Logística``, gerando um lucro de `R$ 110.253.067` em relação ao modelo vigente. É importante, porém, observar se a performance do modelo irá se manter conforme novos dados forem introduzidos.
+
+Em conclusão, ficou claro que o modelo `LGBM` traz muitas vantagens em relação ao modelo vigente. Recomenda-se, então, sua implantação em conjunto com a revisão das políticas de crédito para os produtos que abordamos aqui.
