@@ -1019,7 +1019,7 @@ Finalmente, apliquei o modelo usando a ABT com as variáveis restantes, separand
     <img class= "centered-image" src="/assets/images/event_rate_decile.png" alt="EDA">
 </div>
 
-O modelo conseguiu ordenar as faixas de score conforme o esperado. Este gráfico nos mostra a base de clientes divida em 10 partes aproximadamente iguais, usando como critério o <i>score</i> de cada cliente, de forma que cada parte contenha uma <b>faixa de <i>score</i></b>. Para os clientes da primeira faixa de score, podemos observar uma taxa de evento (no caso deste projeto, <b>inadimplencia</b>) de 25%. Isso significa que, caso a área de negócio decida <b>rejeitar</b> a concessão a todos os clientes nesta faixa de <i>score</i>, ela estará eliminando 25% do risco, em troca de 10% da base de clientes. Com isso em mente, percebe-se que quanto maior a taxa de evento no primeiro decil, mais valioso ele será para o negócio.
+O modelo conseguiu ordenar as faixas de score conforme o esperado. Este gráfico nos mostra a base de clientes divida em 10 partes aproximadamente iguais, usando como critério o <i>score</i> de cada cliente, de forma que cada parte contenha uma <b>faixa de <i>score</i></b>. Para os clientes da primeira faixa de score, podemos observar uma taxa de evento (no caso deste projeto, <b>inadimplencia</b>) de 25%.
 
 
 <table>
@@ -1114,11 +1114,322 @@ Com o término da execução desta parte, podemos avaliar as métricas do modelo
   </tr>
 </table>
 
-Comparando com o modelo <b>baseline</b>, notamos uma maior estabilidade entre os conjunto e uma melhora significativa durante o `teste`.
+Comparando com o modelo <b>baseline</b>, notamos uma maior estabilidade entre os conjuntos e uma melhora significativa durante o `teste`.
 
-Conforme fiz na Regressão Logística, aqui também estamos interessados na capacidade do modelo de ordenar a taxa de evento nas faixas de <i>score</i>.
+Conforme vimos na Regressão Logística, aqui também estamos interessados na capacidade do modelo de ordenar a taxa de evento nas faixas de <i>score</i>.
 
 <div class="container">
     <img class= "centered-image" src="/assets/images/event_rate_decile_lgbm.png" alt="EDA">
 </div>
 
+O LGBM conseguiu um acumulo maior de taxa de evento no primeiro decil que a Regressão Logística (algo em torno de 1.5%). As implicações para o <b>negócio</b> serão discutidas em detalhes na seção a seguir.
+
+
+<h1>4. Avaliando os Resultados</h1>
+
+Nesta última seção irei abordar os ganhos financeiros potenciais com a aplicação dos modelos abordados até aqui, considerando uma política de crédito vigente que aprova 100% dos clientes (para facilitar a comparação, já que não temos esta informação). Também iremos considerar que o primeiro decil será <b>rejeitado</b>, uma vez que é o decil com maior concentração de inadimplencia.
+
+Lembrando que esta abordagem é apenas uma tentativa de quantificar os resultados do modelo. Como nossas informações estão limitadas somente ao momento da ``aplicação``, não conseguimos trazer aqui efeitos como <b>swap-in</b> ou <b>swap-out</b>.
+
+Para estimar os ganhos, vou considerar o <b>ticket médio</b> e a <b>taxa de juros</b> dos dois produtos (Cash Loans e Revolving Loans), da seguinte maneira:
+
+<table border="1">
+  <tr>
+    <th>Produto</th>
+    <th>% Volume</th>
+    <th>Ticket Médio</th>
+    <th>Taxa de Juros</th>
+  </tr>
+  <tr>
+    <td>Cash Loans</td>
+    <td>91,00%</td>
+    <td>R$ 628.524,55</td>
+    <td>22,00%</td>
+  </tr>
+  <tr>
+    <td>Revolving Loans</td>
+    <td>9,00%</td>
+    <td>R$ 325.106,09</td>
+    <td>49,00%</td>
+  </tr>
+</table>
+
+<b>Obs.</b> Irei representar os valores monetários a seguir em reais por conveniência, porém esta não é a moeda original dos dados.
+
+<h2>4.1. Modelo Vigente</h2>
+
+Conforme definimos na seção anterior, irei considerar que o modelo vigente não recusa nenhum cliente, o que simula um cenário onde não há uma política de crédito em vigor. Na amostragem que estou utilizando (baseado no conjunto de teste dos modelos), estamos olhando para um total de 64578 clientes. Olhando para o modelo vigente, temos o seguinte situação:
+
+
+<table border="1">
+  <tr>
+    <th>Modelo</th>
+    <th>Volume Público</th>
+    <th>Volume Aprovado</th>
+    <th>Taxa de Aprovação</th>
+    <th>Volume Inadimp.</th>
+    <th>Taxa Inadimp.</th>
+  </tr>
+  <tr>
+    <td>Vigente</td>
+    <td>64578</td>
+    <td>64578</td>
+    <td>100%</td>
+    <td>5134</td>
+    <td>7,95%</td>
+  </tr>
+</table>
+
+A taxa de inadimplencia está aproximadamente igual ao valor que descobrimos durante a etapa de análise exploratória, sendo um indicativo de que não há problemas com a nossa amostra. Com o número de <b>clientes</b> e a <b>taxa de aprovação</b>, podemos estimar a receita total gerada e a perda proveniente dos clientes inadimplentes.
+
+<table border="1">
+  <tr>
+    <th>Modelo</th>
+    <th>Receita</th>
+    <th>Perda</th>
+    <th>Balanço</th>
+    <th>% Ganho</th>
+  </tr>
+  <tr>
+    <td>Vigente</td>
+    <td>R$ 9.051.755.767</td>
+    <td>R$ 3.086.651.305</td>
+    <td>R$ 5.965.104.462</td>
+    <td>0,00%</td>
+  </tr>
+</table>
+
+Feito este processo para o modelo vigente, vamos analisar os modelos propostos e quantificar o ganho em relação ao atual.
+
+<h2>4.2. Modelos Propostos</h2>
+
+Iniciando com o resultado da ordenação por decis da ``Regressão Logística``, temos o seguinte cenário:
+
+<table border="1">
+  <tr>
+    <th>Decil</th>
+    <th>Event Rate</th>
+    <th>Volume Clientes</th>
+    <th>Qtd. Inadimp.</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>25,59%</td>
+    <td>6460</td>
+    <td>1653</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>14,45%</td>
+    <td>6459</td>
+    <td>933</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>10,40%</td>
+    <td>6470</td>
+    <td>673</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>7,91%</td>
+    <td>6461</td>
+    <td>511</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>6,10%</td>
+    <td>6457</td>
+    <td>394</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>4,67%</td>
+    <td>6493</td>
+    <td>303</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>3,67%</td>
+    <td>6429</td>
+    <td>236</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>2,80%</td>
+    <td>6502</td>
+    <td>182</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>2,28%</td>
+    <td>6446</td>
+    <td>147</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>1,59%</td>
+    <td>6401</td>
+    <td>102</td>
+  </tr>
+</table>
+
+Conforme nossas premissas, caso o primeiro decil seja automaticamente rejeitado, estaremos negando a concessão para 6460 clientes, 1653 (25.59%) deles considerados "maus". A tabela abaixo compara a Regressão Logística com o Vigente:
+
+
+<table border="1">
+  <tr>
+    <th>Cenário</th>
+    <th>Volume Público</th>
+    <th>Volume Aprovado</th>
+    <th>Taxa de Aprovação</th>
+    <th>Volume Inadimp.</th>
+    <th>Taxa Inadimp.</th>
+  </tr>
+  <tr>
+    <td>Regressão Logística</td>
+    <td>64578</td>
+    <td>58118</td>
+    <td>90,0%</td>
+    <td>3481</td>
+    <td>5,99%</td>
+  </tr>
+  <tr>
+    <td>Vigente x Reg. Log</td>
+    <td>0</td>
+    <td>-6460</td>
+    <td>-10,0%</td>
+    <td>-1653</td>
+    <td>-1,96%</td>
+  </tr>
+</table>
+
+
+Aqui podemos observar que reduzir 10% da aprovação, neste cenário, resultaria em um <b>risco</b> 1.96% menor de inadimplência. Para este modelo ser utilizado, o valor da perda proveniente da redução na aprovação precisa ser menor que o valor da perda por inadimplência, sugerindo que mesmo com uma menor aprovação, o banco ainda teria lucros maiores. A tabela abaixo traz esta comparação:
+
+
+<table border="1">
+  <tr>
+    <th>Cenário</th>
+    <th>Receita</th>
+    <th>Perda</th>
+    <th>Balanço</th>
+    <th>% Ganho</th>
+  </tr>
+  <tr>
+    <td>Reg. Log.</td>
+    <td>R$ 8.146.271.821</td>
+    <td>R$ 2.092.841.159</td>
+    <td>R$ 6.053.430.662</td>
+    <td>1,481%</td>
+  </tr>
+  <tr>
+    <td>Vigente X Reg. Log</td>
+    <td>-R$ 905.483.945</td>
+    <td>-R$ 993.810.146</td>
+    <td>R$ 88.326.200</td>
+    <td>1,481%</td>
+  </tr>
+</table>
+
+Mesmo com uma receita menor, ainda foi possível ter um lucro de `R$ 88.326.200` (1.48%), somente com a eliminação do primeiro decil. É possível que fazendo uma separação um pouco menor das faixas de score (15 faixas ao invés de 10, por exemplo), consigamos uma concentração ainda maior de inadimplentes em uma única faixa, tornando este lucro ainda maior, desde que as premissas de ordenação das faixas se mantenha.
+
+
+Olhando agora para o ``LGBM``, temos o seguinte cenário:
+
+<table border="1">
+  <tr>
+    <th>Decil</th>
+    <th>Event Rate</th>
+    <th>Volume</th>
+    <th>Qtd. Inadimp.</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>26,15%</td>
+    <td>6458</td>
+    <td>6458</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>14,56%</td>
+    <td>6458</td>
+    <td>12916</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>10,56%</td>
+    <td>6458</td>
+    <td>19374</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>7,60%</td>
+    <td>6457</td>
+    <td>25828</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>6,01%</td>
+    <td>6458</td>
+    <td>32290</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>4,41%</td>
+    <td>6458</td>
+    <td>38748</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>3,69%</td>
+    <td>6457</td>
+    <td>45199</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>2,85%</td>
+    <td>6458</td>
+    <td>51664</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>2,21%</td>
+    <td>6458</td>
+    <td>58122</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>1,46%</td>
+    <td>6458</td>
+    <td>64580</td>
+  </tr>
+</table>
+
+Este modelo se saiu ligeiramente melhor em concentrar a taxa de evento no primeiro decil. Aplicando os mesmos conceitos anteriores, temos o seguinte resultado:
+
+<table border="1">
+  <tr>
+    <th>Cenário</th>
+    <th>Receita</th>
+    <th>Perda</th>
+    <th>Balanço</th>
+    <th>% Ganho</th>
+  </tr>
+  <tr>
+    <td>LGBM</td>
+    <td>R$ 8.146.552.157</td>
+    <td>R$ 2.071.194.627,58</td>
+    <td>R$ 6.075.357.529,42</td>
+    <td>1,85%</td>
+  </tr>
+  <tr>
+    <td>Vigente x LGBM</td>
+    <td>-R$ 905.203.610</td>
+    <td>-R$ 1.015.456.677</td>
+    <td>R$ 110.253.067</td>
+    <td>1,85%</td>
+  </tr>
+</table>
+
+Este modelo se saiu ainda melhor que a ``Regressão Logística``, gerando um lucro de `R$ 110.253.067` em relação ao modelo vigente. É importante, porém, observar se a performance do modelo irá se manter conforme novos dados forem introduzidos.
